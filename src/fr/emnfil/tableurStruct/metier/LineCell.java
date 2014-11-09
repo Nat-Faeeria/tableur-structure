@@ -6,8 +6,11 @@ public class LineCell extends Cell {
 		super(position, value, table);
 	}
 	
+	/**
+	 * Renvoie un vecteur correspondant à la ligne
+	 */
 	protected Cell[] getVecteur(){
-		int dim = this.table.getDimLine();
+		int dim = this.table.getDimColumn();
 		Cell[] retour = new Cell[dim];
 		for(int i=position,j=0;i<(position+dim);i+=1,j++){
 			retour[j]=this.table.table[i];

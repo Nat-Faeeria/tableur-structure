@@ -6,9 +6,12 @@ public class ColumnCell extends Cell {
 		super(position, value, table);
 	}
 	
+	/**
+	 * Renvoie une vecteur correspondant à la colonne
+	 */
 	protected Cell[] getVecteur(){
-		int dim = this.table.getDimLine();
-		Cell[] retour = new Cell[this.table.getDimColumn()];
+		int dim = this.table.getDimColumn();
+		Cell[] retour = new Cell[this.table.getDimLine()];
 		for(int i=position,j=0;i<=(this.table.table.length-(dim-(position)));i+=dim,j++){
 			retour[j]=this.table.table[i];
 		}
