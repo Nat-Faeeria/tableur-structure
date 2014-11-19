@@ -11,7 +11,8 @@ public class Test extends TableCreator {
 		table("un").column("un").addValues(1,5,6,7,8);
 		table("un").column("deux").addValues(2,2);
 		table("un").column("trois").addValues(3,2,3);
-		table("un").applyFormule(Formule.SUM, 2);
+		table("un").applyFormule(Formule.SUM, "trois");
+		table("un").applyFormule(Formule.AVERAGE, 2);
 		
 		
 		createTable("deux");

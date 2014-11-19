@@ -97,11 +97,15 @@ public class Column extends Observable{
 		String toReturn = "";
 		if (type.equals(DataTypes.VARCHAR)){
 			for (Cell c : this.values){
-				toReturn+="\""+c.getValue()+"\",";
+				if (!c.isFromFormule()){
+					toReturn+="\""+c.getValue()+"\",";
+				}
 			}
 		}else{
 			for (Cell c : this.values){
-				toReturn+=c.getValue()+",";
+				if (!c.isFromFormule()){
+					toReturn+=c.getValue()+",";
+				}
 			}
 		}
 		

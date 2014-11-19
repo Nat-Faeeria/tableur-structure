@@ -12,12 +12,14 @@ public class Table implements Observer{
 	private String name;
 	private Columns table;
 	private Columns formules;
+	private List<FormuleToken> formuleTokens;
 	
 	public Table(String name){
 		this.name=name;
 		this.table=new Columns(this);
 		this.table.add(0,new Column(DataTypes.INT, "lines"));
 		this.formules=new Columns(this);
+		this.formuleTokens=new ArrayList<FormuleToken>();
 	}
 	
 	/**
@@ -45,40 +47,68 @@ public class Table implements Observer{
 	}
 	
 	/**
-	 * Applique une formule sur une ligne
-	 * @param formule : formule à appliquer
-	 * @param indexLine : index de la ligne sur laquelle appliquer la formule
-	 */
-	public void applyFormule(int formule, int indexLine){
-		List<Cell> cells = this.line(indexLine-1);
-		if (cells.get(0).getValue() instanceof String){
-			Column column = new Column(DataTypes.VARCHAR, "Formule"+formule);
-			for(int i=0;i<indexLine-1;i++){
-				column.getValues().add(new Cell(""));
-			}
-			Cell cell = new Cell(Formule.execute(formule, cells));
-			column.getValues().add(indexLine-1, cell);
-			this.formules.add(column);
-		}else{
-			Column column = new Column(DataTypes.DOUBLE, "Formule"+formule);
-			for(int i=0;i<indexLine-1;i++){
-				column.getValues().add(new Cell(null));
-			}
-			Cell cell = new Cell(Formule.execute(formule, cells));
-			column.getValues().add(indexLine-1, cell);
-			this.formules.add(column);
-		}
-	}
-	
-	/**
 	 * Applique une formule sur une Column
 	 * @param formule : la formule à appliquer
 	 * @param columnName : la Column sur laquelle appliquer la formule
 	 */
 	public void applyFormule(int formule, String columnName){
 		Column column = this.column(columnName);
-		column.addValue(Formule.execute(formule, column));
+		FormuleToken formuleToken = new FormuleToken(formule, column.getValues(), -1,columnName);
+		for (Cell c : column.getValues()){
+			c.addObserver(formuleToken);
+		}
+		Cell cell = new Cell(Formule.execute(formule, column),true);
+		formuleToken.addObserver(cell);
+		column.getValues().add(cell);
+		this.formuleTokens.add(formuleToken);
 	}
+	
+	/**
+	 * Applique une formule sur une ligne
+	 * @param formule : formule à appliquer
+	 * @param indexLine : index de la ligne sur laquelle appliquer la formule > 0 !!!
+	 */
+	public void applyFormule(int formule, int indexLine){
+		
+		if (indexLine!=0){
+			indexLine=indexLine-1;
+		}
+		List<Cell> cells = this.line(indexLine);
+		
+		//mémorisation d'application d'une formule
+		FormuleToken formuleToken = new FormuleToken(formule, cells,indexLine,null);
+		for (Cell c : cells){
+			c.addObserver(formuleToken);
+		}
+		
+		//application de la formule
+		if (cells.get(0).getValue() instanceof String){
+			Column column = new Column(DataTypes.VARCHAR, "Formule"+formule);
+			for(int i=0;i<indexLine;i++){
+				column.getValues().add(new Cell(""));
+			}
+			Cell cell = new Cell(Formule.execute(formule, cells),true);
+			formuleToken.addObserver(cell);
+			column.getValues().add(indexLine, cell);
+			this.formules.add(column);
+		}else{
+			Column column = new Column(DataTypes.DOUBLE, "Formule"+formule);
+			for(int i=0;i<indexLine;i++){
+				column.getValues().add(new Cell(null));
+			}
+			Cell cell = new Cell(Formule.execute(formule, cells),true);
+			formuleToken.addObserver(cell);
+			column.getValues().add(indexLine, cell);
+			this.formules.add(column);
+			this.formuleTokens.add(formuleToken);
+		}
+	}
+	
+	public void applyFormule(int formule, List<Cell> cells){
+		
+	}
+	
+	
 	
 	/**
 	 * Ajoute une Column dans la liste des Column
@@ -135,10 +165,11 @@ public class Table implements Observer{
 				toReturn+="table(\""+this.name+"\").column(\""+c.getName()+"\").addValues("+c.getCellValues()+");\n";
 			}
 		}
-		for (Column c : this.formules){
-			if (c.getName()!="lines"){
-				toReturn+="table(\""+this.name+"\").addColumn("+c.saveMeUp()+");\n";
-				toReturn+="table(\""+this.name+"\").column(\""+c.getName()+"\").addValues("+c.getCellValues()+");\n";
+		for (FormuleToken ft : this.formuleTokens){
+			if (ft.indexLine!=-1 && ft.columnName==null){
+				toReturn+="table(\""+this.name+"\").applyFormule("+ft.formule+", "+ft.indexLine+");\n";
+			}else if (ft.indexLine==-1 && ft.columnName!=null){
+				toReturn+="table(\""+this.name+"\").applyFormule("+ft.formule+", \""+ft.columnName+"\");\n";
 			}
 		}
 		return toReturn;

@@ -41,9 +41,8 @@ public class Formule{
 	public static Object execute(int formule, Column column){
 		if (formule!=AVERAGE){
 			return execute(formule, column.getValues());
-		}else{
-			return "Pas appliquable sur une colonne";
 		}
+		return 0;
 	}
 	
 	/**
